@@ -5,6 +5,55 @@ var board,
   pgnEl = $('#pgn');
 
 
+var removeHighlights = function() {
+  $('#board .square-55d63').removeClass('highlight-legal');
+  $('#board .square-55d63').removeClass('highlight-selected');
+  $('#board .square-55d63').removeClass('highlight-capture');
+};
+
+var removeAllMovesHighlight = function() {
+  $('#board .square-55d63').removeClass('highlight-all-moves');
+};
+
+var highlightAllPossibleMoves = function() {
+  removeAllMovesHighlight();
+
+  if (game.game_over()) return;
+
+  var moves = game.moves({ verbose: true });
+
+  for (var i = 0; i < moves.length; i++) {
+    $('#board .square-' + moves[i].to).addClass('highlight-all-moves');
+  }
+};
+
+var highlightLegalMoves = function(square) {
+  var moves = game.moves({
+    square: square,
+    verbose: true
+  });
+
+  if (moves === null || moves.length === 0) return false;
+
+  // Remove blue highlights when showing piece-specific moves
+  removeAllMovesHighlight();
+
+  // Highlight the selected square
+  $('#board .square-' + square).addClass('highlight-selected');
+
+  // Highlight all legal move targets
+  for (var i = 0; i < moves.length; i++) {
+    var targetSquare = moves[i].to;
+    if (moves[i].captured) {
+      $('#board .square-' + targetSquare).addClass('highlight-capture');
+    } else {
+      $('#board .square-' + targetSquare).addClass('highlight-legal');
+    }
+  }
+
+  return true;
+};
+
 // do not pick up pieces if the game is over
 // only pick up pieces for the side to move
 var onDragStart = function(source, piece, position, orientation) {
@@ -13,9 +62,15 @@ var onDragStart = function(source, piece, position, orientation) {
       (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
     return false;
   }
+
+  removeHighlights();
+  highlightLegalMoves(source);
 };
 
 var onDrop = function(source, target) {
+  removeHighlights();
+  removeAllMovesHighlight();
+
   // see if the move is legal
   var move = game.move({
     from: source,
@@ -27,13 +82,36 @@ var onDrop = function(source, target) {
   if (move === null) return 'snapback';
 
   updateStatus();
-  getResponseMove();
+  highlightAllPossibleMoves();
 };
 
 // update the board position after the piece snap
 // for castling, en passant, pawn promotion
 var onSnapEnd = function() {
     board.position(game.fen());
+};
+
+var onMouseoverSquare = function(square, piece) {
+  if (game.game_over()) return;
+
+  // If no piece on square, do nothing
+  if (piece === false) return;
+
+  var isWhitePiece = piece.search(/^w/) !== -1;
+  var isBlackPiece = piece.search(/^b/) !== -1;
+
+  // Only highlight if it's current player's piece
+  if ((game.turn() === 'w' && isBlackPiece) ||
+      (game.turn() === 'b' && isWhitePiece)) {
+    return;
+  }
+
+  highlightLegalMoves(square);
+};
+
+var onMouseoutSquare = function(square, piece) {
+  removeHighlights();
+  highlightAllPossibleMoves();
 };
 
 var updateStatus = function() {
@@ -79,37 +157,16 @@ var cfg = {
   position: 'start',
   onDragStart: onDragStart,
   onDrop: onDrop,
-  onSnapEnd: onSnapEnd
+  onSnapEnd: onSnapEnd,
+  onMouseoverSquare: onMouseoverSquare,
+  onMouseoutSquare: onMouseoutSquare
 };
-
-var randomResponse = function() {
-    fen = game.fen()
-    $.get($SCRIPT_ROOT + "/move/" + fen, function(data) {
-        game.move(data, {sloppy: true});
-        // board.position(game.fen());
-        updateStatus();
-    })
-}
-
-var getResponseMove = function() {
-    var e = document.getElementById("sel1");
-    var depth = e.options[e.selectedIndex].value;
-    fen = game.fen()
-    $.get($SCRIPT_ROOT + "/move/" + depth + "/" + fen, function(data) {
-        game.move(data, {sloppy: true});
-        updateStatus();
-        // This is terrible and I should feel bad. Find some way to fix this properly.
-        // The animations would stutter when moves were returned too quick, so I added a 100ms delay before the animation
-        setTimeout(function(){ board.position(game.fen()); }, 100);
-    })
-}
-
 
 // did this based on a stackoverflow answer
 // http://stackoverflow.com/questions/29493624/cant-display-board-whereas-the-id-is-same-when-i-use-chessboard-js
 setTimeout(function() {
     board = ChessBoard('board', cfg);
-    // updateStatus();
+    highlightAllPossibleMoves();
 }, 0);
 
 
@@ -165,17 +222,16 @@ var setStatus = function(status) {
 
 var takeBack = function() {
     game.undo();
-    if (game.turn() != "w") {
-        game.undo();
-    }
     board.position(game.fen());
     updateStatus();
+    highlightAllPossibleMoves();
 }
 
 var newGame = function() {
     game.reset();
     board.start();
     updateStatus();
+    highlightAllPossibleMoves();
 }
 
 var getCapturedPieces = function() {

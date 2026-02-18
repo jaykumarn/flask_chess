@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>ChessBot</title>
+        <title>Chess</title>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.js"></script>
 
@@ -22,7 +22,6 @@
         integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
-        <script type="text/javascript"> $SCRIPT_ROOT = {{ request.script_root|tojson|safe }}; </script>
         <script type="text/javascript" src="{{ url_for('static',filename='libs/chessboard/js/chessboard-0.3.0.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static',filename='libs/chessboard/js/chessboard-0.3.0.min.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static',filename='scripts.js') }}"></script>
@@ -31,7 +30,7 @@
     <body>
         <nav class="navbar navbar-default navbar-fixed-top">
           <div class="container-fluid">
-              <h1 id="logo">AI Chess</h1>
+              <h1 id="logo">Chess</h1>
           </div>
         </nav></br></br></br>
         </br></br></br><div class="container">
@@ -61,13 +60,6 @@
                             <form class="form-inline">
                                 <button type="button" class="btn btn-default" id="backBtn" onclick="takeBack()";>Take Back</button>
                                 <button type="button" class="btn btn-default" id="reset" onclick="newGame()";>New Game</button>
-                                <select class="form-control" id="sel1">
-                                    <option value="5">Depth: 5</option>
-                                    <option value="4">Depth: 4</option>
-                                    <option value="3">Depth: 3</option>
-                                    <option value="2">Depth: 2</option>
-                                    <option value="1">Depth: 1</option>
-                                </select>
                             </form>
                         </div>
                     </div>
